@@ -72,13 +72,13 @@ export default function SpeechMatch() {
   }
 
   return (
-    <Card title="Speech Matching (Adaptive + Batched)">
-      <div className="space-y-4">
-        <div className="flex flex-wrap items-center gap-2">
+    <Card title="Speech Matching (Adaptive + Batched)" tone="amber">
+      <div className="space-y-6">
+        <div className="flex flex-wrap items-center gap-4">
           <Pill>Level adapts on backend</Pill>
-          <label className="ml-auto text-sm font-medium">Strictness:</label>
+          <label className="ml-auto text-sm font-medium text-stone-800">Strictness:</label>
           <select
-            className="rounded-md border px-3 py-2"
+            className="rounded-md border-[3px] border-amber-300 bg-amber-50 px-3 py-2 text-stone-900"
             value={strictness}
             onChange={e => setStrictness(e.target.value as any)}
           >
@@ -88,36 +88,52 @@ export default function SpeechMatch() {
           </select>
         </div>
 
-        <div className="rounded-md border bg-neutral-50 p-3">
-          <div className="text-neutral-700">Say this:</div>
-          <p className="mt-1 text-lg">{queue.current?.target ?? 'Loading…'}</p>
+        <div className="rounded-md border-[3px] border-amber-300 bg-amber-50 p-4">
+          <div className="text-stone-700">Say this:</div>
+          <p className="mt-1 text-lg text-stone-900">{queue.current?.target ?? 'Loading…'}</p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-6">
           <button
             onClick={handleStart}
             disabled={!supported || listening || !queue.current}
-            className="rounded-md bg-black px-4 py-2 text-white disabled:opacity-40"
+            className="rounded-md border-[3px] border-amber-700 bg-amber-700 px-5 py-2 text-white disabled:opacity-40"
           >
             {listening ? 'Listening…' : supported ? 'Speak now' : 'Speech not supported'}
           </button>
-          <button onClick={stop} disabled={!listening} className="rounded-md border px-4 py-2">Stop</button>
-          <div className="text-sm text-neutral-600">or type:</div>
+          <button
+            onClick={stop}
+            disabled={!listening}
+            className="rounded-md border-[3px] border-amber-300 bg-amber-50 px-5 py-2 text-stone-900"
+          >
+            Stop
+          </button>
+          <div className="text-sm text-stone-600">or type:</div>
           <input
             value={typed}
             onChange={e => setTyped(e.target.value)}
-            className="min-w-[12rem] rounded-md border px-3 py-2"
+            className="min-w-[16rem] rounded-md border-[3px] border-amber-300 bg-white px-3 py-2 text-stone-900"
             placeholder="Type what was said"
           />
-          <button onClick={handleTypeCheck} className="rounded-md border px-3 py-2">Check</button>
-          <button onClick={queue.next} className="ml-auto rounded-md border px-3 py-2">Next</button>
+          <button
+            onClick={handleTypeCheck}
+            className="rounded-md border-[3px] border-amber-300 bg-amber-50 px-4 py-2 text-stone-900"
+          >
+            Check
+          </button>
+          <button
+            onClick={queue.next}
+            className="ml-auto rounded-md border-[3px] border-amber-300 bg-amber-50 px-4 py-2 text-stone-900"
+          >
+            Next
+          </button>
         </div>
 
         {last && (
-          <div className="mt-3 space-y-2 rounded-lg border p-3">
-            <div><span className="font-medium">Target:</span> {queue.current?.target}</div>
-            <div><span className="font-medium">Heard:</span> {last.heard}</div>
-            <div className="flex flex-wrap items-center gap-2">
+          <div className="mt-3 space-y-2 rounded-lg border-[3px] border-amber-300 bg-amber-50 p-4">
+            <div><span className="font-medium text-stone-800">Target:</span> {queue.current?.target}</div>
+            <div><span className="font-medium text-stone-800">Heard:</span> {last.heard}</div>
+            <div className="flex flex-wrap items-center gap-3">
               <Pill>Coverage {Math.round(last.coverage * 100)}%</Pill>
               <Pill>WER {last.wer.toFixed(2)}</Pill>
               <Pill>{last.accepted ? '✅ Close enough' : '❌ Try again'}</Pill>

@@ -1,4 +1,3 @@
-
 # Backend (FastAPI)
 
 FastAPI service providing adaptive exercise items and tracking user progress with SQLite.

@@ -1,5 +1,3 @@
-# frontend/README.md
-
 # Frontend (React + TypeScript + Vite + Tailwind v4)
 
 Single-page app with three exercises and a progress panel. Talks to the FastAPI backend via `/api`.

@@ -5,9 +5,13 @@ import useSpeechRecognition from '../hooks/useSpeechRecognition'
 import useItemQueue from '../hooks/useItemQueue'
 import { useProgressAPI } from '../api/progress'
 import type { SpeechItem } from '../types/exercises'
+import BatchSummary from '../components/BatchSummary'
+import { useBatchStats } from '../hooks/useBatchStats'
 
 export default function SpeechMatch() {
   const { reportAttempt, getNext } = useProgressAPI()
+  const batch = useBatchStats('speech')
+
   const [strictness, setStrictness] =
     React.useState<'lenient'|'normal'|'strict'>('lenient')
   const { supported, listening, start, stop } = useSpeechRecognition()
@@ -33,7 +37,7 @@ export default function SpeechMatch() {
 
   const handleStart = () => {
     const t0 = performance.now()
-    start((alts: Array<{ transcript: string; confidence: number }>) => {
+    start(async (alts: Array<{ transcript: string; confidence: number }>) => {
       let best: typeof last = null
       for (const a of alts) {
         const s = scoreAgainstTarget(a.transcript, queue.current?.target || '', strictness)
@@ -50,29 +54,31 @@ export default function SpeechMatch() {
       }
       setLast(best)
       const latency = Math.max(0, performance.now() - t0)
-      reportAttempt('speech', {
+      await reportAttempt('speech', {
         item_id: queue.current?.id,
         correct: !!best?.accepted,
         latency_ms: Math.round(latency),
         difficulty_level: { lenient: 1, normal: 3, strict: 5 }[strictness],
       })
+      await batch.record({ correct: !!best?.accepted, latency_ms: Math.round(latency) })
     })
   }
 
-  const handleTypeCheck = () => {
+  const handleTypeCheck = async () => {
     const s = scoreAgainstTarget(typed, queue.current?.target || '', strictness)
     const latency = Math.max(0, performance.now() - startedRef.current)
     setLast({ ...s, heard: typed })
-    reportAttempt('speech', {
+    await reportAttempt('speech', {
       item_id: queue.current?.id,
       correct: !!s?.accepted,
       latency_ms: Math.round(latency),
       difficulty_level: { lenient: 1, normal: 3, strict: 5 }[strictness],
     })
+    await batch.record({ correct: !!s?.accepted, latency_ms: Math.round(latency) })
   }
 
   return (
-    <Card title="Speech Matching (Adaptive + Batched)" tone="amber">
+    <Card title="Speech Matching" tone="amber">
       <div className="space-y-6">
         <div className="flex flex-wrap items-center gap-4">
           <Pill>Level adapts on backend</Pill>
@@ -141,6 +147,18 @@ export default function SpeechMatch() {
           </div>
         )}
       </div>
+
+      {batch.summary.visible && (
+        <BatchSummary
+          tone="amber"
+          data={batch.summary}
+          onContinue={async () => {
+            batch.close()
+            batch.startNewBatch()
+            await queue.refill()
+          }}
+        />
+      )}
     </Card>
   )
 }

@@ -3,6 +3,8 @@ import { Card } from '../components/UI'
 import { useProgressAPI } from '../api/progress'
 import useItemQueue from '../hooks/useItemQueue'
 import type { PrepItem } from '../types/exercises'
+import BatchSummary from '../components/BatchSummary'
+import { useBatchStats } from '../hooks/useBatchStats'
 
 function BlankSlot({
   index, filled, onDropWord, isCorrect,
@@ -34,6 +36,8 @@ const DraggableWord = ({ word }: { word: string }) => (
 
 export default function Prepositions(){
   const { reportAttempt, getNext } = useProgressAPI()
+  const batch = useBatchStats('prepositions')
+
   const mapFn = React.useCallback((data:any): PrepItem[] => data.items||[],[])
   const queue = useItemQueue<PrepItem>("prepositions", getNext, mapFn)
 
@@ -46,13 +50,27 @@ export default function Prepositions(){
   React.useEffect(()=>{ if(item){ setFills(Array(item.answer.length).fill("")); setVerdict(null); startRef.current=performance.now() } },[item?.id])
 
   const dropWord=(blankIndex:number,word:string)=>{ const next=[...fills]; next[blankIndex]=word; setFills(next) }
-  const check = ()=>{ if(!item) return; const v = fills.map((w,i)=> !!w && w.toLowerCase()===item.answer[i].toLowerCase()); setVerdict(v); const all=v.every(Boolean)&&v.length===item.answer.length; const latency=Math.max(0,performance.now()-startRef.current); reportAttempt("prepositions",{ item_id:item.id, correct:all, latency_ms:Math.round(latency), difficulty_level:item.answer.length }) }
+
+  const check = async ()=> {
+    if(!item) return
+    const v = fills.map((w,i)=> !!w && w.toLowerCase()===item.answer[i].toLowerCase())
+    setVerdict(v)
+    const all = v.every(Boolean) && v.length === item.answer.length
+    const latency = Math.max(0, performance.now() - startRef.current)
+    await reportAttempt("prepositions",{
+      item_id:item.id,
+      correct:all,
+      latency_ms:Math.round(latency),
+      difficulty_level:item.answer.length
+    })
+    await batch.record({ correct: all, latency_ms: Math.round(latency) })
+  }
 
   // render tokens with an incrementing blank index
   let blankIdx = -1
 
   return (
-    <Card title="Prepositions — Drag the correct word (Adaptive + Batched)" tone="orange">
+    <Card title="Prepositions — Drag the correct word" tone="orange">
       <div className="space-y-6">
         <p className="text-lg text-stone-900">
           {item ? item.tokens.map((t:string,i:number)=> t==="{blank}" ? (
@@ -61,7 +79,7 @@ export default function Prepositions(){
           ) : <span key={i} className="mx-1 inline-block">{t}</span>) : "Loading…"}
         </p>
 
-        {/* MUCH BIGGER spacing between options */}
+        {/* bigger spacing between options */}
         <div className="flex flex-wrap gap-6">
           {["in","on","at","under","over","between","behind"].map(w => <DraggableWord key={w} word={w} />)}
         </div>
@@ -78,6 +96,18 @@ export default function Prepositions(){
           </div>
         )}
       </div>
+
+      {batch.summary.visible && (
+        <BatchSummary
+          tone="orange"
+          data={batch.summary}
+          onContinue={async () => {
+            batch.close()
+            batch.startNewBatch()
+            await queue.refill()
+          }}
+        />
+      )}
     </Card>
   )
 }

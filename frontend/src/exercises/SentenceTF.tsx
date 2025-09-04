@@ -3,9 +3,13 @@ import { Card } from '../components/UI'
 import { useProgressAPI } from '../api/progress'
 import useItemQueue from '../hooks/useItemQueue'
 import type { TFItem } from '../types/exercises'
+import BatchSummary from '../components/BatchSummary'
+import { useBatchStats } from '../hooks/useBatchStats'
 
 export default function SentenceTF(){
   const { reportAttempt, getNext } = useProgressAPI()
+  const batch = useBatchStats('sentence_tf')
+
   const mapFn = React.useCallback((data:any): TFItem[] => data.items||[],[])
   const queue = useItemQueue<TFItem>("sentence_tf", getNext, mapFn)
 
@@ -18,10 +22,24 @@ export default function SentenceTF(){
   React.useEffect(()=>{ setChoice(null); setFeedback(null); startRef.current=performance.now() },[item?.id])
 
   const speak = React.useCallback(()=>{ if(!item) return; const u=new SpeechSynthesisUtterance(item.passage); window.speechSynthesis.cancel(); window.speechSynthesis.speak(u) },[item])
-  const answer=(val:boolean)=>{ if(!item) return; setChoice(val); const ok = val===item.answer; setFeedback(ok); const latency=Math.max(0,performance.now()-startRef.current); reportAttempt("sentence_tf",{ item_id:item.id, correct:ok, latency_ms:Math.round(latency), difficulty_level: 1+Math.min(4, Math.ceil((item.passage?.length||0)/60)) }) }
+
+  const answer = async (val: boolean) => {
+    if (!item) return
+    setChoice(val)
+    const ok = val === item.answer
+    setFeedback(ok)
+    const latency = Math.max(0, performance.now() - startRef.current)
+    await reportAttempt("sentence_tf",{
+      item_id:item.id,
+      correct:ok,
+      latency_ms:Math.round(latency),
+      difficulty_level: 1 + Math.min(4, Math.ceil((item.passage?.length || 0) / 60)),
+    })
+    await batch.record({ correct: ok, latency_ms: Math.round(latency) })
+  }
 
   return (
-    <Card title="Sentence Comprehension — True or False (Adaptive + Batched)" tone="rose">
+    <Card title="Sentence Comprehension — True or False" tone="rose">
       <div className="space-y-6">
         <div className="rounded-md border-[3px] border-rose-300 bg-rose-50 p-4">
           <div className="text-stone-700">Passage</div>
@@ -53,6 +71,18 @@ export default function SentenceTF(){
           </div>
         )}
       </div>
+
+      {batch.summary.visible && (
+        <BatchSummary
+          tone="rose"
+          data={batch.summary}
+          onContinue={async () => {
+            batch.close()
+            batch.startNewBatch()
+            await queue.refill()
+          }}
+        />
+      )}
     </Card>
   )
 }

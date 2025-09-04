@@ -1,69 +1,73 @@
-# React + TypeScript + Vite
+# frontend/README.md
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+# Frontend (React + TypeScript + Vite + Tailwind v4)
 
-Currently, two official plugins are available:
+Single-page app with three exercises and a progress panel. Talks to the FastAPI backend via `/api`.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Prerequisites
 
-## Expanding the ESLint configuration
+* Node.js ≥ 18
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Install & Run (dev)
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+cd frontend
+npm install
+npm run dev
+# open http://localhost:5173
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The dev server proxies `/api` to `http://localhost:8000` (see `vite.config.ts`). Start the backend first.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Available Scripts
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+* `npm run dev` — start Vite dev server
+* `npm run build` — type-check + production build into `dist/`
+* `npm run preview` — local preview of the production build
+* `npm run lint` — run ESLint (TypeScript + React Hooks rules)
+
+## Environment (optional)
+
+By default, API calls go to `/api` (proxied). To hit a remote backend directly:
+
+```bash
+# .env.local
+VITE_API_BASE=https://your-backend.example.com
 ```
+
+## App Overview
+
+* **Speech Match** — speak or type to match the prompt. Uses Web Speech API; shows coverage & WER-like feedback.
+* **Prepositions** — drag words (e.g., in/on/at…) into blanks.
+* **Sentence T/F** — read/listen to a short passage and answer true/false.
+* **Progress Panel** — fetches EMA stats from the backend.
+* **Batch Summary** — after every 5 answers, shows accuracy, avg latency, and level changes.
+
+## Styling
+
+* Tailwind v4 is already set up. If styles don’t apply, ensure `@import "tailwindcss";` is present in `src/index.css` and restart `npm run dev`.
+
+## Accessibility & Browser Notes
+
+* **Microphone:** allow access in the browser to use Speech Match.
+* **Web Speech API:** best in Chrome/Edge desktop. Safari/Firefox support is limited.
+* Keyboard users can complete all tasks (drag targets also have focusable drop zones with Enter/Space via mouse emulation).
+
+## Building for Production
+
+```bash
+npm run build
+# deploy the contents of dist/ to any static host
+```
+
+For local testing:
+
+```bash
+npm run preview
+```
+
+## Common Issues
+
+* **“Failed to fetch”** — backend not running on port 8000 or proxy changed.
+* **CORS error** — update `allow_origins` in backend `main.py` if serving the frontend from a different origin.
+* **No microphone input** — check site permissions, use a supported browser.

@@ -1,4 +1,3 @@
-import React from 'react'
 import { Card } from './UI'
 
 type Tone = 'amber'|'orange'|'rose'|'stone'

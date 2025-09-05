@@ -1,0 +1,35 @@
+version: "3.9"
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      MOCK_MODE: "1"
+      DB_URL: sqlite:///./aphasia.db
+      ALLOW_ORIGINS: http://localhost:5173
+    volumes:
+      - ./backend:/app
+    working_dir: /app
+    command: uvicorn main:app --reload --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+
+  web:
+    image: node:20
+    working_dir: /app
+    environment:
+      # Talk to the api service by name inside the Docker network
+      VITE_API_BASE: http://api:8000
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
+    volumes:
+      - ./frontend:/app
+      - node_modules:/app/node_modules
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+
+volumes:
+  node_modules:

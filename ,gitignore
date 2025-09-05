@@ -1,0 +1,33 @@
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/.cache/
+frontend/coverage/
+
+# Python
+backend/.venv/
+backend/__pycache__/
+backend/*.pyc
+backend/*.pyo
+backend/*.pyd
+backend/aphasia.db
+
+# DB & local state
+aphasia.db
+*.sqlite
+*.db
+
+# Env files (keep example only)
+.env
+.env.*
+!.env.example
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Docker build contexts shouldn’t pull these
+**/.dockerignore

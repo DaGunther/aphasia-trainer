@@ -1,0 +1,26 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      # Use SQLite in a container volume; no Postgres needed.
+      - MOCK_MODE=1
+      - DB_URL=sqlite:////data/aphasia.db
+      - OPENAI_MODEL=gpt-4o-mini
+    volumes:
+      - api-data:/data
+    expose:
+      - "8000"
+
+  web:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+
+volumes:
+  api-data:
